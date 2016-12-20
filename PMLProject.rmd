@@ -1,0 +1,119 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
+Identifying Movement with HAR Devices
+=================================
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Executive Summary
+In this study, we are looking at human activity recognition data to determine what type of activity is being performed based off the data values that are presented.  We focus primarily on the *classe* variable, which is described by the following:
+
+Classe: A-exactly according to specification, B-Elbows to the front, C-lifting halfway, D-lowering halfway, E-throwing hips to the front
+
+If the data are categorized correctly, we will be able to tell whether the exercises are being performed properly or incorrectly.
+
+## Loading the Data
+
+Before we get started, we first load the data and libraries into R.
+
+
+
+```{r, echo=TRUE}
+library(caret)
+library(ggplot2)
+library(randomForest)
+library(rpart)
+library(rattle)
+set.seed(323)
+
+
+urlTrain<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+urlTest<-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+
+training<-read.csv(urlTrain,header=TRUE,na.strings = c("NA", ""),sep=",")
+testing<-read.csv(urlTest,header=TRUE,na.strings = c("NA", ""),sep=",")
+```
+
+## Cleaning the Data
+We look at the data:
+
+```{r,echo=TRUE}
+str(training)
+```
+
+We see that the training set has 19622 observations of 160 variables. It's also notable that many of the variables have mostly NA's.
+
+In order to clean up our data set, we remove the variables with more than 95% NA's.  We also remove columns 1 through 7 which do not represent recorded output from the human activity measurement devices.
+
+```{r}
+#Remove columns with more than 95% NA's
+trainData <- training[, colSums(is.na(training)) < 0.05*19622]
+testData <- testing[, colSums(is.na(testing)) < 0.05*20]
+
+#Remove columns 1:7 which do not represent output data
+trainData<-trainData[,-c(1:7)]
+testData<-testData[,-c(1:7)]
+head(trainData)
+```
+
+
+##Partitioning the Data and Fitting a Model
+
+Now that we have a cleaned data set, we can apply our machine learning algorithms.  We partition the _trainData_ data frame into 70% training and 30% validation set.
+
+```{r}
+inTrain<-createDataPartition(trainData$classe,p=0.7,list=FALSE)
+train1<- trainData[inTrain,]
+validation<-trainData[-inTrain,]
+```
+
+Next, comes choosing the models.  We will look at two models 
+
+
+##Predicting with Random Forests
+
+We first try predicting with the random forests model, which is often the most accurate.
+
+```{r}
+modRF <- randomForest(classe ~. , data=train1)
+predRF<-predict(modRF,validation)
+confusionMatrix(predRF,validation$classe)$overall
+```
+Through this model, we obtain 99.49% accuracy.  Highly accurate. We try one more model to compare.
+
+##Predicting with an Rpart Decision Tree
+
+Next we use recursive partitioning and present the data in a decision tree.
+
+```{r}
+modRPart<-train(classe~.,method="rpart", data=train1)
+fancyRpartPlot(modRPart$finalModel, cex=0.8)
+
+```
+
+We take our model for the training set and fit it to the validation set.
+
+```{r}
+predRPart<-predict(modRPart,validation)
+confusionMatrix(predRPart,validation$classe)$overall
+```
+
+Here we see only 49.91% accuracy.  Our random forest model was the best fit so we will apply it to the test set.
+
+
+## Conclusions
+
+We fit our random forest model to the test set to see how it applies to an unseen data set. 
+
+
+```{r}
+predTest<-predict(modRF,testData)
+print(predTest)
+```
+
+We have printed our predictions for all 20 observations in the test set.  Because we have an accracy of 99.49% with our model, we expect that all 20 should be correct.  This is shown to be the case by entering these results into the prediction quiz.
+
