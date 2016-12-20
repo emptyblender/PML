@@ -6,7 +6,7 @@ output:
 Identifying Movement with HAR Devices
 =================================
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = TRUE,fig.path='figure/ ')
 ```
 
 ## Executive Summary
@@ -115,5 +115,5 @@ predTest<-predict(modRF,testData)
 print(predTest)
 ```
 
-We have printed our predictions for all 20 observations in the test set.  Because we have an accracy of 99.49% with our model, we expect that all 20 should be correct.  This is shown to be the case by entering these results into the prediction quiz.
+We have printed our predictions for all 20 observations in the test set.  Because we have an accuracy of 99.49% (and thus an out of sample error of 0.51%) with our model, we expect that all 20 should be correct.  This is shown to be the case by entering these results into the prediction quiz.
 
